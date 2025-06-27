@@ -1,27 +1,25 @@
 import React from 'react';
 import { Pokemon, useGetPokemons } from '../../hooks/useGetPokemons';
 import { Button, CircularProgress } from '@mui/material';
-import { useGetPokemonDetails } from '../../hooks/useGetPokemonsDetails';
-import PokemonDialog from './PokemonDialog';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import Fab from '@mui/material/Fab';
 import useStyles from './PokemonListStyles';
 import { filterPokemonsByName } from '../Utils/pokemonUtils';
+import { Outlet, useNavigate } from "react-router-dom";
 
 export const PokemonList = () => {
   const classes = useStyles();
   const { pokemons, loading } = useGetPokemons();
   const [searchVal, setSearchVal] = React.useState('');
-  const [open, setOpen] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState(pokemons);
-  const [selectedPokemonId, setSelectedPokemonId] = React.useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = React.useState(false);
+  const navigate = useNavigate();
+
+  const listRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setSearchResults(pokemons);
   }, [pokemons]);
-
-  const listRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const node = listRef.current;
@@ -38,6 +36,7 @@ export const PokemonList = () => {
       listRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
   const handleSearchClick = () => {
     setSearchVal('');
     setSearchResults(pokemons);
@@ -51,21 +50,18 @@ export const PokemonList = () => {
   };
 
   const handleClickOpen = (pkmn: Pokemon) => {
-    setSelectedPokemonId(pkmn.id);
-    setOpen(true);
+    navigate(`/pokemon/${pkmn.id}`);
   };
-
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedPokemonId(null);
-  };
-
-  const { pokemon: selectedPokemon, loading: detailsLoading } = useGetPokemonDetails(selectedPokemonId || undefined);
-
   return (
     <div className={classes.root} ref={listRef} style={{ overflowY: 'auto', height: '100vh' }}>
       <div className={classes.searchContainer}>
-        <input onChange={getSearchKeyword} type="text" className={classes.search} placeholder="Search Pokemon" value={searchVal} />
+        <input
+          onChange={getSearchKeyword}
+          type="text"
+          className={classes.search}
+          placeholder="Search Pokemon"
+          value={searchVal}
+        />
         <button onClick={handleSearchClick} className={classes.buttonSearch}>Clear Search</button>
       </div>
 
@@ -74,12 +70,19 @@ export const PokemonList = () => {
           <CircularProgress color="primary" />
         </div>
       )}
-      {!loading && pokemons.length >= 0 && searchResults.length === 0 && <div>No pokemon found</div>}
+      {!loading && pokemons.length > 0 && searchResults.length === 0 && (
+        <div>No pokemon found</div>
+      )}
       <div className={classes.pokemonList}>
         {searchResults.map((pkmn) => (
           <div className={classes.card} key={pkmn.id}>
             <div className={classes.title}>{pkmn.name}</div>
-            <img src={pkmn.image} alt={pkmn.name} title={pkmn.name} style={{ width: '100px', height: '100px' }} />
+            <img
+              src={pkmn.image}
+              alt={pkmn.name}
+              title={pkmn.name}
+              style={{ width: '100px', height: '100px' }}
+            />
             <div className={classes.types}>
               {pkmn.types.map((type, index) => (
                 <span key={index} className={classes.type}>
@@ -104,13 +107,6 @@ export const PokemonList = () => {
           </div>
         ))}
       </div>
-      <PokemonDialog
-        open={open}
-        onClose={handleClose}
-        pokemon={selectedPokemon}
-        loading={detailsLoading}
-        classes={classes}
-      />
       {showBackToTop && (
         <Fab
           color="primary"
@@ -128,7 +124,7 @@ export const PokemonList = () => {
           <KeyboardArrowUpIcon />
         </Fab>
       )}
+      <Outlet />
     </div>
   );
 };
-

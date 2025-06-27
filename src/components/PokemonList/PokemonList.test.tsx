@@ -1,13 +1,15 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, waitFor, screen } from '@testing-library/react';
-import { fireEvent } from '@testing-library/dom';
+import { render, waitFor, screen, fireEvent } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import { PokemonList } from './PokemonList';
 import * as useGetPokemonsModule from '../../hooks/useGetPokemons';
 import * as useGetPokemonDetailsModule from '../../hooks/useGetPokemonsDetails';
 
 // Mock the styles and dialog
-jest.mock('./PokemonDialog', () => () => <div data-testid="pokemon-dialog" />);
+jest.mock('./PokemonDialog', () => (props: any) =>
+  props.open ? <div data-testid="pokemon-dialog">{props.pokemon?.name || 'Dialog'}</div> : null
+);
 jest.mock('./PokemonListStyles', () => () => ({}));
 
 // Mock data
@@ -25,6 +27,9 @@ const mockPokemons = [
     types: ['Fire'],
   },
 ];
+
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<BrowserRouter>{ui}</BrowserRouter>);
 
 describe('PokemonList', () => {
   beforeEach(() => {
@@ -44,14 +49,14 @@ describe('PokemonList', () => {
   });
 
   it('renders the search input and pokemons', () => {
-    render(<PokemonList />);
+    renderWithRouter(<PokemonList />);
     expect(screen.getByPlaceholderText(/search pokemon/i)).toBeInTheDocument();
     expect(screen.getByText('Bulbasaur')).toBeInTheDocument();
     expect(screen.getByText('Charmander')).toBeInTheDocument();
   });
 
   it('filters pokemons by search', () => {
-    render(<PokemonList />);
+    renderWithRouter(<PokemonList />);
     const input = screen.getByPlaceholderText(/search pokemon/i);
     fireEvent.change(input, { target: { value: 'bulb' } });
     expect(screen.getByText('Bulbasaur')).toBeInTheDocument();
@@ -59,18 +64,19 @@ describe('PokemonList', () => {
   });
 
   it('shows "No pokemon found" when search yields no results', () => {
-    render(<PokemonList />);
+    renderWithRouter(<PokemonList />);
     const input = screen.getByPlaceholderText(/search pokemon/i);
     fireEvent.change(input, { target: { value: 'xyz' } });
     expect(screen.getByText(/no pokemon found/i)).toBeInTheDocument();
   });
 
   it('opens dialog when Details button is clicked', async () => {
-    render(<PokemonList />);
+    renderWithRouter(<PokemonList />);
     const detailsButton = screen.getAllByText('Details')[0];
     fireEvent.click(detailsButton);
     await waitFor(() => {
       expect(screen.getByTestId('pokemon-dialog')).toBeInTheDocument();
+      expect(screen.getByTestId('pokemon-dialog')).toHaveTextContent('Bulbasaur');
     });
   });
 
@@ -79,6 +85,7 @@ describe('PokemonList', () => {
       pokemons: [],
       loading: true,
     } as any);
-    render(<PokemonList />);
+    renderWithRouter(<PokemonList />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
+});

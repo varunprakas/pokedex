@@ -6,6 +6,8 @@ import { Nav } from '../components';
 import { ApolloProvider } from '@apollo/client';
 import { client } from './client';
 import { ListPage, Home } from '../screens';
+import { PokemonDialog } from 'src/components/PokemonList/PokemonDialog';
+
 function App() {
   const classes = useStyles();
   return (
@@ -18,7 +20,9 @@ function App() {
               <div className={classes.scrollableArea}>
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/pokemon" element={<ListPage />} />
+                  <Route path="/pokemon" element={<ListPage />}>
+                   <Route path=":id" element={<PokemonDialog />} />
+                  </Route>
                 </Routes>
               </div>
             </div>
